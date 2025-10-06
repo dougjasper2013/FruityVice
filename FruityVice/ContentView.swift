@@ -17,7 +17,6 @@ struct ContentView: View {
     @State private var showingImagePicker = false
     @State private var pickerSource: UIImagePickerController.SourceType = .photoLibrary
 
-    // Computed property for camera availability
     private var isCameraAvailable: Bool {
         UIImagePickerController.isSourceTypeAvailable(.camera)
     }
@@ -34,9 +33,9 @@ struct ContentView: View {
             .task {
                 await loadFruits()
             }
+            // Card sheet
             .sheet(isPresented: $showCard) {
                 if let fruit = selectedFruit {
-                    // Pass the bindings and camera availability to FlippableCardContainer
                     FlippableCardContainer(
                         fruit: fruit,
                         selectedImage: $selectedImage,
@@ -45,6 +44,10 @@ struct ContentView: View {
                         isCameraAvailable: isCameraAvailable
                     )
                 }
+            }
+            // Image picker sheet (single sheet, resolves multiple sheet issue)
+            .sheet(isPresented: $showingImagePicker) {
+                ImagePicker(sourceType: pickerSource, selectedImage: $selectedImage)
             }
         }
     }
@@ -62,6 +65,8 @@ struct ContentView: View {
         }
     }
 }
+
+// Preview
 #Preview {
     ContentView()
 }

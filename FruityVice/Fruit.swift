@@ -8,7 +8,7 @@
 import Foundation
 
 struct Fruit: Codable, Identifiable {
-    let id = UUID()  // generated locally, not from API
+    let id = UUID()
     let name: String
     let genus: String
     let family: String

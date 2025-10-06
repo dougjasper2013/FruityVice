@@ -42,7 +42,9 @@ struct ImagePicker: UIViewControllerRepresentable {
         }
     }
 }
+
+// Preview
 #Preview {
-    // A constant binding just to satisfy the initializer for preview
-    ImagePicker(sourceType: .photoLibrary, selectedImage: .constant(nil))
+    @Previewable @State var selectedImage: UIImage? = nil
+    return ImagePicker(sourceType: .photoLibrary, selectedImage: $selectedImage)
 }
