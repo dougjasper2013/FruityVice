@@ -8,16 +8,12 @@
 import Foundation
 
 struct Fruit: Codable, Identifiable {
-    let id = UUID()
+    let id = UUID()  // generated locally, not from API
     let name: String
     let genus: String
     let family: String
     let order: String
     let nutritions: Nutrition
-    
-    enum CodingKeys: String, CodingKey {
-        case name, genus, family, order, nutritions
-    }
 }
 
 struct Nutrition: Codable {
