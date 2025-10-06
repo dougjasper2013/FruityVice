@@ -45,6 +45,6 @@ struct ImagePicker: UIViewControllerRepresentable {
 
 // Preview
 #Preview {
-    @Previewable @State var selectedImage: UIImage? = nil
+    @State var selectedImage: UIImage? = nil
     return ImagePicker(sourceType: .photoLibrary, selectedImage: $selectedImage)
 }

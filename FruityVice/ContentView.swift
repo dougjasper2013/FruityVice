@@ -12,9 +12,7 @@ struct ContentView: View {
     @State private var selectedFruit: Fruit? = nil
     @State private var showCard = false
 
-    // Image picker state
     @State private var selectedImage: UIImage? = nil
-    @State private var showingImagePicker = false
     @State private var pickerSource: UIImagePickerController.SourceType = .photoLibrary
 
     private var isCameraAvailable: Bool {
@@ -30,24 +28,16 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("Fruits")
-            .task {
-                await loadFruits()
-            }
-            // Card sheet
+            .task { await loadFruits() }
             .sheet(isPresented: $showCard) {
                 if let fruit = selectedFruit {
                     FlippableCardContainer(
                         fruit: fruit,
                         selectedImage: $selectedImage,
-                        showingImagePicker: $showingImagePicker,
                         pickerSource: $pickerSource,
                         isCameraAvailable: isCameraAvailable
                     )
                 }
-            }
-            // Image picker sheet (single sheet, resolves multiple sheet issue)
-            .sheet(isPresented: $showingImagePicker) {
-                ImagePicker(sourceType: pickerSource, selectedImage: $selectedImage)
             }
         }
     }
@@ -57,9 +47,7 @@ struct ContentView: View {
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             let decoded = try JSONDecoder().decode([Fruit].self, from: data)
-            DispatchQueue.main.async {
-                fruits = decoded
-            }
+            DispatchQueue.main.async { fruits = decoded }
         } catch {
             print("Error loading fruits:", error)
         }
