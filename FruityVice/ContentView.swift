@@ -1,19 +1,18 @@
-//
-//  ContentView.swift
-//  FruityVice
-//
-//  Created by Douglas Jasper on 2025-10-06.
-//
-
 import SwiftUI
 import PDFKit
+
+// MARK: - Struct to store image + timestamp
+struct FruitImageInfo {
+    var image: UIImage
+    var date: Date
+}
 
 struct ContentView: View {
     @State private var fruits: [Fruit] = []
     @State private var selectedFruit: Fruit? = nil
 
     // Store selected images per fruit (by fruit name)
-    @State private var fruitImages: [String: UIImage] = [:]
+    @State private var fruitImages: [String: FruitImageInfo] = [:]
 
     @State private var pickerSource: UIImagePickerController.SourceType = .photoLibrary
 
@@ -30,8 +29,8 @@ struct ContentView: View {
                     HStack {
                         Text(fruit.name)
                         Spacer()
-                        if let image = fruitImages[fruit.name] {
-                            Image(uiImage: image)
+                        if let info = fruitImages[fruit.name] {
+                            Image(uiImage: info.image)
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 40, height: 40)
@@ -51,8 +50,14 @@ struct ContentView: View {
             .task { await loadFruits() }
             .sheet(item: $selectedFruit) { fruit in
                 let binding = Binding<UIImage?>(
-                    get: { fruitImages[fruit.name] },
-                    set: { fruitImages[fruit.name] = $0 }
+                    get: { fruitImages[fruit.name]?.image },
+                    set: {
+                        if let newImage = $0 {
+                            fruitImages[fruit.name] = FruitImageInfo(image: newImage, date: Date())
+                        } else {
+                            fruitImages[fruit.name] = nil
+                        }
+                    }
                 )
 
                 FlippableCardContainer(
@@ -97,20 +102,31 @@ struct ContentView: View {
 
         let data = renderer.pdfData { context in
             for fruit in fruits {
-                guard let image = fruitImages[fruit.name] else { continue }
+                guard let info = fruitImages[fruit.name] else { continue }
                 context.beginPage()
 
-                // Draw fruit text
+                // Draw fruit text with timestamp
                 let textAttributes = [
-                    NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 24)
+                    NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 20)
                 ]
-                let text = "\(fruit.name)\nFamily: \(fruit.family)\nCalories: \(fruit.nutritions.calories)"
-                let textRect = CGRect(x: 20, y: 20, width: pageWidth - 40, height: 100)
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateStyle = .medium
+                dateFormatter.timeStyle = .short
+                let dateText = "Photo Date: \(dateFormatter.string(from: info.date))"
+
+                let text = """
+                \(fruit.name)
+                Family: \(fruit.family)
+                Calories: \(fruit.nutritions.calories)
+                \(dateText)
+                """
+                let textRect = CGRect(x: 20, y: 20, width: pageWidth - 40, height: 120)
                 text.draw(in: textRect, withAttributes: textAttributes)
 
                 // Draw image
+                let image = info.image
                 let imageMaxWidth = pageWidth - 40
-                let imageMaxHeight = pageHeight - 150
+                let imageMaxHeight = pageHeight - 160
                 let aspectRatio = image.size.width / image.size.height
                 var imageWidth = imageMaxWidth
                 var imageHeight = imageWidth / aspectRatio
@@ -120,7 +136,7 @@ struct ContentView: View {
                 }
                 let imageRect = CGRect(
                     x: (pageWidth - imageWidth)/2,
-                    y: 120,
+                    y: 140,
                     width: imageWidth,
                     height: imageHeight
                 )
