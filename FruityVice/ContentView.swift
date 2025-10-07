@@ -6,44 +6,60 @@
 //
 
 import SwiftUI
-
+ 
 struct ContentView: View {
     @State private var fruits: [Fruit] = []
     @State private var selectedFruit: Fruit? = nil
-
-    // Image picker state (top-level)
-    @State private var selectedImage: UIImage? = nil
+ 
+    // Store selected images per fruit (by fruit name or id)
+    @State private var fruitImages: [String: UIImage] = [:]
+ 
     @State private var pickerSource: UIImagePickerController.SourceType = .photoLibrary
-
+ 
     private var isCameraAvailable: Bool {
         UIImagePickerController.isSourceTypeAvailable(.camera)
     }
-
+ 
     var body: some View {
         NavigationView {
             List(fruits) { fruit in
                 Button(action: {
-                    // set the selected fruit; sheet(item:) will present
                     selectedFruit = fruit
                 }) {
-                    Text(fruit.name)
+                    HStack {
+                        Text(fruit.name)
+                        Spacer()
+                        if fruitImages[fruit.name] != nil {
+                            Image(uiImage: fruitImages[fruit.name]!)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 40, height: 40)
+                                .clipShape(Circle())
+                        }
+                    }
                 }
             }
             .navigationTitle("Fruits")
             .task { await loadFruits() }
-            // Present the card sheet directly bound to the selectedFruit item
+            // Present sheet for selected fruit
             .sheet(item: $selectedFruit) { fruit in
+                // Create a binding specific to this fruit
+                let binding = Binding<UIImage?>(
+                    get: { fruitImages[fruit.name] },
+                    set: { fruitImages[fruit.name] = $0 }
+                )
+ 
                 FlippableCardContainer(
                     fruit: fruit,
-                    selectedImage: $selectedImage,
+                    selectedImage: binding,
                     pickerSource: $pickerSource,
                     isCameraAvailable: isCameraAvailable
                 )
-                .id(fruit.id) // force fresh instance for each fruit
+                .id(fruit.id)
             }
         }
     }
-
+ 
     // Fetch Fruityvice data
     func loadFruits() async {
         guard let url = URL(string: "https://www.fruityvice.com/api/fruit/all") else { return }
@@ -58,8 +74,7 @@ struct ContentView: View {
         }
     }
 }
-
-// Preview
+ 
 #Preview {
     ContentView()
 }
