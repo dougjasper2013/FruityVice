@@ -7,8 +7,8 @@
 
 import Foundation
 
-struct Fruit: Codable, Identifiable {
-    let id = UUID()
+struct Fruit: Codable, Identifiable, Hashable {
+    let id = UUID()           // Needed for List and Identifiable
     let name: String
     let genus: String
     let family: String
@@ -16,7 +16,7 @@ struct Fruit: Codable, Identifiable {
     let nutritions: Nutrition
 }
 
-struct Nutrition: Codable {
+struct Nutrition: Codable, Hashable {
     let carbohydrates: Double
     let protein: Double
     let fat: Double

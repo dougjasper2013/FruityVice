@@ -9,13 +9,12 @@ import SwiftUI
 
 struct FlippableCardContainer: View {
     let fruit: Fruit
-
-    // Bindings from parent
     @Binding var selectedImage: UIImage?
     @Binding var pickerSource: UIImagePickerController.SourceType
     var isCameraAvailable: Bool
+    @ObservedObject var locationManager: LocationManager
 
-    // Local state
+    // Add this line if missing
     @State private var rotation = 0.0
     @State private var showingImagePicker = false
 
@@ -82,17 +81,19 @@ struct FlippableCardContainer: View {
             }
 
             HStack(spacing: 20) {
+                
+
                 Button("Pick from Library") {
+                    locationManager.requestLocation()  // <-- Request location
                     pickerSource = .photoLibrary
                     showingImagePicker = true
                 }
-
                 Button("Take Photo") {
                     guard isCameraAvailable else { return }
+                    locationManager.requestLocation()  // <-- Request location
                     pickerSource = .camera
                     showingImagePicker = true
-                }
-                .disabled(!isCameraAvailable)
+                }            .disabled(!isCameraAvailable)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -116,14 +117,17 @@ struct FlippableCardContainer: View {
         order: "Rosales",
         nutritions: Nutrition(carbohydrates: 13.81, protein: 0.26, fat: 0.17, calories: 52, sugar: 10.39)
     )
+    
     @State var selectedImage: UIImage? = nil
     @State var pickerSource: UIImagePickerController.SourceType = .photoLibrary
+    @StateObject var locationManager = LocationManager() // Create an instance for the preview
 
     return FlippableCardContainer(
         fruit: sampleFruit,
         selectedImage: $selectedImage,
         pickerSource: $pickerSource,
-        isCameraAvailable: false
+        isCameraAvailable: false,
+        locationManager: locationManager
     )
     .previewLayout(.sizeThatFits)
     .padding()
