@@ -1,10 +1,3 @@
-//
-//  FlippableCardContainer.swift
-//  FruityVice
-//
-//  Created by Douglas Jasper on 2025-10-06.
-//
-
 import SwiftUI
 
 struct FlippableCardContainer: View {
@@ -14,16 +7,16 @@ struct FlippableCardContainer: View {
     var isCameraAvailable: Bool
     @ObservedObject var locationManager: LocationManager
 
-    // Add this line if missing
     @State private var rotation = 0.0
     @State private var showingImagePicker = false
+    @State private var showingRemoveConfirmation = false
 
     var body: some View {
         VStack {
             ZStack {
-                // Show front or back depending on rotation (use truncatingRemainder to be robust)
+                // Show front or back depending on rotation
                 if rotation.truncatingRemainder(dividingBy: 360) < 90 ||
-                   rotation.truncatingRemainder(dividingBy: 360) > 270 {
+                    rotation.truncatingRemainder(dividingBy: 360) > 270 {
                     frontContent
                         .onTapGesture { flipCard() }
                 } else {
@@ -38,14 +31,21 @@ struct FlippableCardContainer: View {
         .frame(height: 350)
         .padding()
         .onAppear {
-            // Ensure rotation is set on the next main-runloop pass so layout happens after state stabilizes
             DispatchQueue.main.async {
                 rotation = 0
             }
         }
-        // Present the picker as a fullScreenCover attached to this container so it shows immediately
         .fullScreenCover(isPresented: $showingImagePicker) {
             ImagePicker(sourceType: pickerSource, selectedImage: $selectedImage)
+        }
+        // ✅ Confirmation dialog for removing photo
+        .confirmationDialog("Remove Photo?", isPresented: $showingRemoveConfirmation) {
+            Button("Remove Photo", role: .destructive) {
+                selectedImage = nil
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Are you sure you want to remove the selected photo?")
         }
     }
 
@@ -81,19 +81,30 @@ struct FlippableCardContainer: View {
             }
 
             HStack(spacing: 20) {
-                
-
                 Button("Pick from Library") {
-                    locationManager.requestLocation()  // <-- Request location
+                    locationManager.requestLocation()
                     pickerSource = .photoLibrary
                     showingImagePicker = true
                 }
+
                 Button("Take Photo") {
                     guard isCameraAvailable else { return }
-                    locationManager.requestLocation()  // <-- Request location
+                    locationManager.requestLocation()
                     pickerSource = .camera
                     showingImagePicker = true
-                }            .disabled(!isCameraAvailable)
+                }
+                .disabled(!isCameraAvailable)
+            }
+
+            // ✅ Show Remove button only when an image exists
+            if selectedImage != nil {
+                Button(role: .destructive) {
+                    showingRemoveConfirmation = true
+                } label: {
+                    Label("Remove Photo", systemImage: "trash")
+                        .foregroundColor(.red)
+                }
+                .padding(.top, 10)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -103,24 +114,31 @@ struct FlippableCardContainer: View {
         .padding()
     }
 
+    // MARK: - Flip
     private func flipCard() {
         rotation += 180
     }
 }
 
-// Preview
+// MARK: - Preview
 #Preview {
     let sampleFruit = Fruit(
         name: "Apple",
         genus: "Malus",
         family: "Rosaceae",
         order: "Rosales",
-        nutritions: Nutrition(carbohydrates: 13.81, protein: 0.26, fat: 0.17, calories: 52, sugar: 10.39)
+        nutritions: Nutrition(
+            carbohydrates: 13.81,
+            protein: 0.26,
+            fat: 0.17,
+            calories: 52,
+            sugar: 10.39
+        )
     )
-    
+
     @State var selectedImage: UIImage? = nil
     @State var pickerSource: UIImagePickerController.SourceType = .photoLibrary
-    @StateObject var locationManager = LocationManager() // Create an instance for the preview
+    @StateObject var locationManager = LocationManager()
 
     return FlippableCardContainer(
         fruit: sampleFruit,
